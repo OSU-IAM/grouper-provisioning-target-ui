@@ -40,6 +40,7 @@ import org.apache.commons.lang.StringUtils;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,8 +53,20 @@ public class UiV2GroupProvisioningTarget {
 
     private static final String MAIN_CONTENT_DIV_ID = "#grouperMainContentDivId";
 
+    /**
+     * If this attribute is on an object (folder or group), provisioning target info can be assigned.
+     */
     public static final String GROUPER_PROVISIONING_TARGET_CANDIDATE_ATTRIBUTE_DEF_NAME = "custom.provisioningTargetCandidate.attributeDefName";
 
+    /**
+     *  If this attribute is on a folder/group, disable provisioning target info. 
+     */
+    public static final String GROUPER_PROVISIONING_TARGET_EXCLUDE_ATTRIBUTE_DEF_NAME = "custom.provisioningTargetExclude.attributeDefName";
+    
+    /** 
+     * If there are multiple attributes on a target, ensure that the first attribute displayed is this one. 
+     */
+    public static final String GROUPER_PROVISIONING_TARGET_ATTRIBUTE_0 = "custom.provisioningTarget.attribute.0";
 
     /**
      * Custom attributes handling
@@ -62,12 +75,15 @@ public class UiV2GroupProvisioningTarget {
     public void groupEditAttributes(final HttpServletRequest request, HttpServletResponse response) {
         final String provisioningTargetCandidateAttributeDefName = GrouperUiConfig.retrieveConfig().propertyValueStringRequired(
                 GROUPER_PROVISIONING_TARGET_CANDIDATE_ATTRIBUTE_DEF_NAME);
+        final String provisioningTargetExcludeAttributeDefName = GrouperUiConfig.retrieveConfig().propertyValueStringRequired(
+        		GROUPER_PROVISIONING_TARGET_EXCLUDE_ATTRIBUTE_DEF_NAME);
 
         withCurrentGroupAndSession(request, new CurrentGroupAndSessionCallback() {
 
             @Override
             public void doWithGroupAndSession(Group group, GrouperSession session) {
-                if (group.getAttributeDelegate().hasAttributeOrAncestorHasAttribute(provisioningTargetCandidateAttributeDefName, false)) {
+                if (group.getAttributeDelegate().hasAttributeOrAncestorHasAttribute(provisioningTargetCandidateAttributeDefName, false) &&
+                	!(group.getAttributeDelegate().hasAttributeOrAncestorHasAttribute(provisioningTargetExcludeAttributeDefName, false))) {
                     Map<Stem, Set<AttributeDefName>> attributeDefinitionsByFolderName = getAllProvisioningTargetsAttributesGroupedByFolder(session);
                     Map<String, String> assignedGroupAttributes = new HashMap();
                     //Assigned Group attributes
@@ -136,10 +152,14 @@ public class UiV2GroupProvisioningTarget {
     }
 
     private Map<Stem, Set<AttributeDefName>> getAllProvisioningTargetsAttributesGroupedByFolder(GrouperSession grouperSession) {
-        //Custom attributes dance
+
+    	final String provisioningTargetAttribute0 = GrouperUiConfig.retrieveConfig().propertyValueStringRequired(
+    			GROUPER_PROVISIONING_TARGET_ATTRIBUTE_0);
+    	
+    	//Custom attributes dance
         Stem rootProvisioningTargetsFolder = StemFinder.findByName(grouperSession, PROVISIONING_TARGETS_ROOT_FOLDER, true);
         Set<Stem> provisioningTargetsFolders = rootProvisioningTargetsFolder.getChildStems();
-
+        
         final Map<Stem, Set<AttributeDefName>> attributeDefinitions = new HashMap();
         for (Stem folder : provisioningTargetsFolders) {
             Set<AttributeDefName> attrNames = new AttributeDefNameFinder()
@@ -147,8 +167,24 @@ public class UiV2GroupProvisioningTarget {
                     .assignSubject(grouperSession.getSubject()).assignPrivileges(AttributeDefPrivilege.ATTR_READ_PRIVILEGES)
                     .findAttributeNames();
 
-            if (attrNames.size() > 0) {
+            //- want to sort attrNames contents so that GROUPER_PROVISIONING_TARGET_ATTRIBUTE_0 always displays first
+            Set<AttributeDefName> tempAttrNames = new LinkedHashSet<AttributeDefName>();
+            // find attrbuteDefName that is GROUPER_PROVISIONING_TARGET_ATTRIBUTE_0 and add it to the tempAttrName set first, and remove from the original set
+            for(AttributeDefName tempDefName : attrNames) {
+            	if(tempDefName.__getName().endsWith(provisioningTargetAttribute0)) {
+            		tempAttrNames.add(tempDefName);
+            		attrNames.remove(tempDefName);
+            		break;
+            	}
+            }
+            // then add the rest...
+            tempAttrNames.addAll(attrNames);
+            
+            /*if (attrNames.size() > 0) {
                 attributeDefinitions.put(folder, attrNames);
+            }*/
+            if (tempAttrNames.size() > 0) {
+                attributeDefinitions.put(folder, tempAttrNames);
             }
         }
         return attributeDefinitions;
@@ -232,6 +268,11 @@ public class UiV2GroupProvisioningTarget {
             sb.append("  <option value=\"yes\"" + (escapedAttributeValue.equalsIgnoreCase("yes") ? " selected " : "") + ">yes</option>");
             sb.append("  <option value=\"no\"" + (escapedAttributeValue.equalsIgnoreCase("no") ? " selected " : "") + ">no</option>");
             sb.append("</select>");
+
+        } else if ("checkbox".equalsIgnoreCase(attributeType)) {
+            sb.append("<input type=\"checkbox\" id=\"").append(escapedAttributeName).append("\" name=\"").append(escapedAttributeName).append("\"");
+            sb.append(((escapedAttributeValue!=null && escapedAttributeValue.equalsIgnoreCase("on")) ? " checked " : ""));
+            sb.append(">");
 
         } else if ("trueFalse".equalsIgnoreCase(attributeType)) {
             sb.append("<select id=\"").append(escapedAttributeName).append("\" name=\"").append(escapedAttributeName).append("\">");

@@ -1,0 +1,17 @@
+## NewService
+# checkbox
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-provision.type=checkbox
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-provision.default=
+# dropDown
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-attrbute1.type=select
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-attrbute1.lov=admins_and_members,all_managed_users
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-attrbute1.default=admins_and_members
+# yesNo
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-attribute2.type=yesNo
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-attribute2.default=no
+# trueFalse
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-attribute3.type=trueFalse
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-attribute3.default=true
+# Not defining the field type will make it default to a textField
+custom.provisioningTarget.etc-attribute-provisioningTargets-newService-externalServiceId.default=googleGroupId
+

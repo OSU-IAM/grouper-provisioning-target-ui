@@ -1,0 +1,40 @@
+// Copy this file to a new gsh file, replace newService and NewService with your own service id/name,
+// edit, add, or remove attributes as needed, then run:
+// /private/grouper/api/bin# ./gsh /private/grouper-provisioning-target-ui/copyOfaddProvisioningTargetAttributes.gsh 
+
+grouperSession = GrouperSession.startRootSession();
+
+// -- Find the AttributeDef for provisioningTargetDef
+attrDef = AttributeDefFinder.findByName("etc:attribute:provisioningTargets:provisioningTargetDef",true);
+
+// -- add a stem to hold provisioning targets for the new Service
+// ----  New Service
+addStem("etc:attribute:provisioningTargets", "newService", "NewService");
+// ------ create target attributes editable via UI
+// ------   Note: type of field will be specified in grouper-ui.properties (See grouperUiProperties.example )
+// ------         types: checkBox, textField, dropDown, yesNo, trueFalse
+// --------- "provision" attribute
+attributeStem = StemFinder.findByName(GrouperSession.staticGrouperSession(), "etc:attribute:provisioningTargets:newService", true);
+attrDefName = attributeStem.addChildAttributeDefName(attrDef,  "provision", "Provision");
+attrDefName.setDescription("**Warning**  Un-checking this check box will remove the group from NewService.");
+attrDefName.store();
+// --------- some other attribute for the service
+attrDefName = attributeStem.addChildAttributeDefName(attrDef,  "attribute1", "Attribute1");
+attrDefName.setDescription("Description for attribute1.");
+attrDefName.store();
+// --------- some other attribute for the service
+attrDefName = attributeStem.addChildAttributeDefName(attrDef,  "attribute2", "Attribute2");
+attrDefName.setDescription("Description for attribute2.");
+attrDefName.store();
+// --------- some other attribute for the service
+attrDefName = attributeStem.addChildAttributeDefName(attrDef,  "attribute3", "Attribute3");
+attrDefName.setDescription("Description for attribute3.");
+attrDefName.store();
+// ------ add internal def names
+// -- Find the AttributeDef for provisioningTargetInternalDef
+internalAttrDef = AttributeDefFinder.findByName("etc:attribute:provisioningTargets:provisioningTargetInternalDef",true);
+
+// --------- attribute for the service that should hols group ID internal to the service.  (e.g., for Box, this is the group ID used by Box)
+attrDefName = attributeStem.addChildAttributeDefName(internalAttrDef,  "externalServiceId", "External Service ID");
+attrDefName.store();
+

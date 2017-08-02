@@ -60,4 +60,18 @@
                 </form>
 
                 </div>
+                
+                <%-- kludge to disable editing of Visibility field while Box decides what to do with the Permission vs Invitability&Visivility --%>
+                <script type="text/javascript">
+                    $( document ).ready(function() {
+                        // disable select element with id="etc:attribute:provisioningTargets:box:visibility"
+                        document.getElementById("etc:attribute:provisioningTargets:box:visibility").disabled=true;
+                        // add onChange to select element with id="etc:attribute:provisioningTargets:box:invitability", so that visibility is auto-set to the same value.
+                        inv = document.getElementById("etc:attribute:provisioningTargets:box:invitability");
+                        inv.onchange = function(){
+                            invitabiltyVal = this.value;
+                            document.getElementById("etc:attribute:provisioningTargets:box:visibility").value = invitabiltyVal;
+                        }
+                    });
+                </script>
               </div>
